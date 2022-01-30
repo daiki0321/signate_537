@@ -16,5 +16,9 @@ jobs:
       - uses: actions/checkout@v1
         with:
           submodules: true
+      - name: wget
+        uses: wei/wget@v1
+        with:
+          args: -O ./src/yolov3-tiny.weights https://pjreddie.com/media/files/yolov3-tiny.weights
       - name: Run build
         run: make all
