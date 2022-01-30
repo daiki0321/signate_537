@@ -1,0 +1,19 @@
+FROM ubuntu:20.04 as tools
+ENV DEBIAN_FRONTEND="noninteractive"
+
+RUN apt-get update && apt-get install -y make git wget
+
+WORKDIR /root/src
+RUN git clone --depth=1 https://github.com/bytecodealliance/wasm-micro-runtime
+
+RUN wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-14/wasi-sdk-14.0-linux.tar.gz
+RUN tar xvf wasi-sdk-14.0-linux.tar.gz -C /opt && rm wasi-sdk-14.0-linux.tar.gz
+
+# Workaround for pthread in libc-WASI
+# https://github.com/bytecodealliance/wasm-micro-runtime/blob/main/doc/pthread_library.md
+RUN /opt/wasi-sdk-14.0/bin/llvm-ar -d /opt/wasi-sdk-14.0/share/wasi-sysroot/lib/wasm32-wasi/libc.a dlmalloc.o
+RUN cp /root/src/wasm-micro-runtime/wamr-sdk/app/libc-builtin-sysroot/include/pthread.h /opt/wasi-sdk-14.0/share/wasi-sysroot/include
+
+WORKDIR /root/src/wasm_module
+COPY ./wasm_module /root/src/wasm_module
+RUN make clean && make
