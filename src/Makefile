@@ -12,6 +12,13 @@ OBJDIR=./obj/
 
 #CSRC = main.c utils.c predict.c image.c
 CSRC = main.c utils.c
+
+ifdef WASI_GEMM_RISC_V
+CSRC += wasi_gemm_fpga_risc_v.c
+else
+CSRC += wasi_gemm_cpu.c
+endif
+
 CSRCS = $(addprefix $(SRCDIR), $(CSRC))
 
 #CPPSRC = image_opencv.cpp
@@ -31,8 +38,11 @@ COBJS = $(addprefix $(OBJDIR), $(COBJ))
 
 CDEPS = $(CSRCS:.c=.d)
 
-CFLAGS = -pthread -O3 \
-	     -g 
+CFLAGS = -pthread -O3 -g
+
+ifdef WASI_GEMM_RISC_V
+CFLAGS += -DWASI_GEMM_RISC_V
+endif
 
 LD_FLAGS = 
 LIBS = -L/usr/local/lib -lvmlib -lm -ldl -lpthread -lrt

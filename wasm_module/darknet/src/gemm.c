@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <math.h>
 
-void x_gemm_cpu(int TA, int TB, int M, int N, int K, float ALPHA, 
+void x_gemm(int TA, int TB, int M, int N, int K, float ALPHA, 
         float *A_wasm, int lda, 
         float *B_wasm, int ldb,
         float BETA,
@@ -74,7 +74,11 @@ void gemm(int TA, int TB, int M, int N, int K, float ALPHA,
         float BETA,
         float *C, int ldc)
 {
-    x_gemm_cpu( TA,  TB,  M, N, K, ALPHA,A,lda, B, ldb,BETA,C,ldc);
+#ifdef WASI_GEMM
+    x_gemm( TA,  TB,  M, N, K, ALPHA,A,lda, B, ldb,BETA,C,ldc);
+#else
+    gemm_cpu( TA,  TB,  M, N, K, ALPHA,A,lda, B, ldb,BETA,C,ldc);
+#endif
 }
 
 void gemm_nn(int M, int N, int K, float ALPHA, 
