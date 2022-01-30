@@ -16,4 +16,4 @@ RUN cp /root/src/wasm-micro-runtime/wamr-sdk/app/libc-builtin-sysroot/include/pt
 
 WORKDIR /root/src/wasm_module
 COPY ./wasm_module /root/src/wasm_module
-RUN make clean && make
+RUN make clean && make WASI_GEMM_ENABLE=1

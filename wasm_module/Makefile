@@ -46,7 +46,11 @@ COBJS = $(addprefix $(OBJDIR), $(COBJ))
 CDEPS = $(CSRCS:.c=.d)
 
 CFLAGS = -pthread -Ofast \
-	     -g -Wall -Wextra -Wformat -Wformat-security
+	 -Wall -Wextra -Wformat -Wformat-security
+
+ifdef WASI_GEMM_ENABLE 
+CFLAGS += -DWASI_GEMM
+endif
 
 LD_FLAGS =  -Wl,--strip-all \
             -Wl,--no-entry \

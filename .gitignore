@@ -1,0 +1,4 @@
+output
+wasm_module/obj
+src/obj
+src/yolov3-tiny.weights
