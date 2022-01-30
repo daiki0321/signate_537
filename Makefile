@@ -9,12 +9,18 @@ endif
 EXTRA_CFLAGS =
 EXTRA_LIBS =
 
+.PHONY: all
+all: wasm_module wamr_main copy_build
+
+.PHONY: wamr_main
 wamr_main:
 	docker buildx build --load --platform linux/$(TARGET) --build-arg ARCH=$(WAMR_ARCH) -t wamr_$(TARGET):latest .
 
+.PHONY: wasm_module
 wasm_module:
 	docker build -t yolo_wasm:latest -f Dockerfile.wasm_module .
 
+.PHONY: clean
 clean:
 	rm -rf output
 
@@ -25,7 +31,8 @@ docker cp $(CONTAINER_ID):$(2) $(3)
 docker rm $(CONTAINER_ID)
 endef
 
-all: wasm_module wamr_main
+.PHONY: copy_build
+copy_build:
 	$(call copy_out_from_docker, yolo_wasm:latest,/root/src/wasm_module/tracking.wasm, ./output/$(TARGET))
 	$(call copy_out_from_docker, wamr_$(TARGET):latest,/root/src/main/yolo_main, ./output/$(TARGET))
 	$(call copy_out_from_docker, wamr_$(TARGET):latest,/root/src/main/yolov3-tiny.cfg, ./output/$(TARGET))
