@@ -1,10 +1,9 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "wasm_export.h"
 #include "utils.h"
-
-#include "darknet.h"
 
 #define STACK_SIZE 8 * 1024
 #define HEAP_SIZE 1024 * 1024 * 1024
