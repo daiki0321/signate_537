@@ -59,8 +59,8 @@ LD_FLAGS =  -Wl,--strip-all \
 	    -z stack-size=655360 \
 	    -Wl,--shared-memory,--no-check-features \
 	    -Wl,--allow-undefined      \
-	    -Wl,--export=__heap_base,--export=__data_end,--export=load_network,--export=set_batch_network \
-	    -Wl,--export=load_image_color,--export=resize_image,--export=network_predict,--export=get_network_boxes,--export=network_predict_image \
+	    -Wl,--export=__heap_base,--export=__data_end,--export=yolo_initialize \
+	    -Wl,--export=test_detector \
 	    -Wl,--stack-first
 
 #CFLAGS = -O3                 \

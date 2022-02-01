@@ -5,6 +5,8 @@
 #include "wasm_export.h"
 #include "utils.h"
 
+#include "darknet.h"
+
 #define STACK_SIZE 8 * 1024
 #define HEAP_SIZE 1024 * 1024 * 1024
 
@@ -36,6 +38,11 @@ x_gemm(wasm_exec_env_t exec_env, int TA, int TB, int M, int N, int K, float ALPH
     x_gemm_cpu(TA,  TB,  M, N, K, ALPHA,A,lda, B, ldb,BETA,C,ldc);
 #endif
 }
+
+/* predict.c */
+int yolo_initialize(char *datacfg, char *cfgfile, char *weightfile);
+int test_detector(char *filename, char *outfile);
+void callback_predict_result(wasm_exec_env_t exec_env, void* dets, int total, int classes, int w, int h);
 
 static wasm_function_inst_t get_function(wasm_module_inst_t module_inst, char* func_name) {
 
@@ -145,6 +152,12 @@ static int start_runtime(void) {
             "(iiiiif*i*if*i)",  // the function prototype signature, avoid to use i32
             NULL        // attachment is NULL
         },
+        {
+            "callback_predict_result", // the name of WASM function name
+            callback_predict_result,   // the native function pointer
+            "(*iiii)",  // the function prototype signature, avoid to use i32
+            NULL        // attachment is NULL
+        },
 /*
         {
             "get_pow", // the name of WASM function name
@@ -190,8 +203,6 @@ int main(int argc, char** argv) {
     wasm_function_inst_t func = NULL;
     uint32_t ret;
 
-	printf("This is main function\n");
-
     ret = start_runtime();
     assert(ret == 0);
 
@@ -209,7 +220,15 @@ int main(int argc, char** argv) {
 
     call_wasm_function(g_exec_env, "_start", 0, argv);
 
-	//run_yolo(argc, argv);
+    char *datacfg = argv[1];
+    char *cfgfile = argv[2];
+    char *weightfile = argv[3];
+
+	ret = yolo_initialize("coco.data", "yolov3-tiny.cfg", "yolov3-tiny.weights");
+    assert(ret == 0);
+
+	ret = test_detector("dog.jpg", "outfile");
+    assert(ret == 0);
 
     wasm_runtime_destroy_exec_env(g_exec_env);
     g_exec_env = NULL;
