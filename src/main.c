@@ -202,6 +202,7 @@ int main(int argc, char** argv) {
 
     wasm_function_inst_t func = NULL;
     uint32_t ret;
+    char filename[256];
 
     ret = start_runtime();
     assert(ret == 0);
@@ -220,15 +221,40 @@ int main(int argc, char** argv) {
 
     call_wasm_function(g_exec_env, "_start", 0, argv);
 
+/*
     char *datacfg = argv[1];
     char *cfgfile = argv[2];
     char *weightfile = argv[3];
+*/
 
 	ret = yolo_initialize("coco.data", "yolov3-tiny.cfg", "yolov3-tiny.weights");
     assert(ret == 0);
 
-	ret = test_detector("dog.jpg", "outfile");
-    assert(ret == 0);
+    char *fname = argv[1];
+
+    FILE* fp = fopen(fname, "r");
+	if(fp == NULL) {
+		printf("%s file not open!\n", fname);
+		return -1;
+	}    
+    while(fgets(filename, 256, fp) != NULL) {
+
+        char* p = strchr( filename, '\n' );
+        /* 改行文字があった場合 */
+        if ( p != NULL )
+        {
+            /* 改行文字を終端文字に置き換える */
+            *p = '\0';
+        }
+
+        char output_filename[256];
+        snprintf(output_filename, 256, "%s_output", filename);
+        printf("%s \n", filename);
+        printf("%s \n", output_filename);
+	    ret = test_detector(filename, output_filename);
+        assert(ret == 0);
+    }
+    fclose(fp);
 
     wasm_runtime_destroy_exec_env(g_exec_env);
     g_exec_env = NULL;

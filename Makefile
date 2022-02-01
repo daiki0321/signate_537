@@ -41,3 +41,4 @@ copy_build:
 	$(call copy_out_from_docker, wamr_$(TARGET):latest,/root/src/main/coco.names, ./output/$(TARGET))
 	$(call copy_out_from_docker, wamr_$(TARGET):latest,/root/src/main/dog.jpg, ./output/$(TARGET))
 	$(call copy_out_from_docker, wamr_$(TARGET):latest,/root/src/main/data, ./output/$(TARGET))
+	$(call copy_out_from_docker, wamr_$(TARGET):latest,/root/src/main/image_list_test.txt, ./output/$(TARGET))
