@@ -11,7 +11,7 @@ OBJDIR=./obj/
 #MAINSRC = darknet/main.c
 
 #CSRC = main.c utils.c predict.c image.c
-CSRC = main.c utils.c
+CSRC = main.c utils.c predict.c
 
 ifdef WASI_GEMM_RISC_V
 CSRC += wasi_gemm_fpga_risc_v.c
