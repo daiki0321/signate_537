@@ -10,6 +10,15 @@ extern wasm_exec_env_t g_exec_env;
 /* this will store wasm local app addr */
 static network* g_net;
 
+typedef struct detection_orig {
+    int class;
+    int left;
+    int top;
+    int right;
+    int bottom;
+    float score;
+}detection_orig;
+
 void callback_predict_result(wasm_exec_env_t exec_env, void* result, int total, int classes, int w, int h)
 {
     int i, j;
@@ -49,8 +58,10 @@ void callback_predict_result(wasm_exec_env_t exec_env, void* result, int total, 
 
 int test_detector(char *filename, char *outfile)
 {
-    uint32_t argv[6] = {0};
+    uint32_t argv[7] = {0};
     char *native_buffer = NULL;
+    int* nboxes;
+    detection_orig* buf;
 
     wasm_function_inst_t module_inst = get_module_inst(g_exec_env);
     assert(module_inst);
@@ -74,13 +85,37 @@ int test_detector(char *filename, char *outfile)
     strncpy(native_buffer, outfile, strlen(outfile) + 1);
     argv[4] = wasm_buffer_2;
 
-    argv[5] = 0;
+    uint32_t wasm_buffer_3 =
+        wasm_runtime_module_malloc(module_inst, sizeof(int), (void **)&native_buffer);
+    assert(wasm_buffer_3);
+    assert(native_buffer);
+    argv[5] = wasm_buffer_3;
+    nboxes = native_buffer;
+    *nboxes = 0;
 
-    uint32_t ret = call_wasm_function(g_exec_env, "test_detector", 6, argv);
+    argv[6] = 0;
+
+    uint32_t ret = call_wasm_function(g_exec_env, "test_detector", 7, argv);
     assert(ret == 0);
+
+    printf("[native] nboxes = %d \n", *nboxes);
+
+    bool ok = wasm_runtime_validate_app_addr(module_inst, argv[0], sizeof(detection_orig)*(*nboxes));
+    assert(ok);
+
+    if (*nboxes > 0) {
+        buf = malloc(sizeof(detection_orig)*(*nboxes));
+        memcpy(buf, wasm_runtime_addr_app_to_native(module_inst, argv[0]), sizeof(detection_orig)*(*nboxes));
+        for(int i = 0; i < *nboxes; i++) {
+            printf("class = %d left = %d top = %d right = %d bottom = %d score =%f\n",
+        buf[i].class, buf[i].left, buf[i].top, buf[i].right, buf[i].bottom, buf[i].score);
+        }
+        wasm_runtime_module_free(module_inst, argv[0]);
+    }
 
     wasm_runtime_module_free(module_inst, wasm_buffer_1);
     wasm_runtime_module_free(module_inst, wasm_buffer_2);
+    wasm_runtime_module_free(module_inst, wasm_buffer_3);
 
     return 0;
 
@@ -113,7 +148,6 @@ int yolo_initialize(char *datacfg, char *cfgfile, char *weightfile)
     assert(native_buffer);
     strncpy(native_buffer, datacfg, strlen(datacfg) + 1);
     argv[0] = wasm_buffer_1;
-
 
     uint32_t wasm_buffer_2 =
         wasm_runtime_module_malloc(module_inst, strlen(cfgfile) + 1, (void **)&native_buffer);

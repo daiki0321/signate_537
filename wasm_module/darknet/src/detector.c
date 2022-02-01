@@ -7,6 +7,15 @@ void callback_predict_result(detection *dets, int total, int classes, int w, int
 
 static int coco_ids[] = {1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,27,28,31,32,33,34,35,36,37,38,39,40,41,42,43,44,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,67,70,72,73,74,75,76,77,78,79,80,81,82,84,85,86,87,88,89,90};
 
+typedef struct detection_orig {
+    int class;
+    int left;
+    int top;
+    int right;
+    int bottom;
+    float score;
+}detection_orig;
+
 static int get_coco_image_id(char *filename)
 {
     char *p = strrchr(filename, '/');
@@ -84,12 +93,62 @@ void print_imagenet_detections(FILE *fp, int id, detection *dets, int total, int
     }
 }
 
-void test_detector(network* net, char *filename, float thresh, float hier_thresh, char *outfile, int fullscreen)
+detection_orig* convert_result_to_native(detection *dets, int total, float thresh, int classes, int w, int h)
+{
+    int i, j;
+
+    if (total < 1) {
+        return NULL;
+    }
+
+    detection_orig* buf = (detection_orig*)malloc(sizeof(detection_orig) * total);
+
+    for(i = 0; i < total; ++i){
+
+        box b = dets[i].bbox;
+
+        int left  = (b.x-b.w/2.)*w;
+        int right = (b.x+b.w/2.)*w;
+        int top   = (b.y-b.h/2.)*h;
+        int bot   = (b.y+b.h/2.)*h;
+
+        if(left < 0) left = 0;
+        if(right > w-1) right = w-1;
+        if(top < 0) top = 0;
+        if(bot > h-1) bot = h-1;
+
+        buf[i].left = left;
+        buf[i].top = top;
+        buf[i].right = right;
+        buf[i].bottom = bot;
+
+        int class = -1;
+        for(j = 0; j < classes; ++j){
+            if (dets[i].prob[j] > thresh){
+                if ((class < 0) || (dets[i].prob[j] > buf[i].score )) {
+                    class = j;
+                    buf[i].score = dets[i].prob[j];
+                    buf[i].class = class;
+                }
+            }
+        }
+        if (class == -1) {
+            memset(&buf[i], 0, sizeof(detection_orig));
+        }
+
+        fprintf(stderr, "class = %d left = %d top = %d right = %d bottom = %d score =%f\n",
+        buf[i].class, buf[i].left, buf[i].top, buf[i].right, buf[i].bottom, buf[i].score);
+    }
+    return buf;
+}
+
+detection_orig* test_detector(network* net, char *filename, float thresh, float hier_thresh, char *outfile, int* pnboxes, int fullscreen)
 {
     double time;
     char buff[256];
     char *input = buff;
     float nms=.45;
+    detection_orig* det_native;
 
     if(filename){
         strncpy(input, filename, 256);
@@ -97,7 +156,7 @@ void test_detector(network* net, char *filename, float thresh, float hier_thresh
         printf("Enter Image Path: ");
         fflush(stdout);
         input = fgets(input, 256, stdin);
-        if(!input) return;
+        if(!input) return NULL;
         strtok(input, "\n");
     }
     image im = load_image_color(input,0,0);
@@ -111,15 +170,16 @@ void test_detector(network* net, char *filename, float thresh, float hier_thresh
     float *X = sized.data;
     time=what_time_is_it_now();
     network_predict(net, X);
+    int nboxes;
     fprintf(stderr, "%s: Predicted in %f seconds.\n", input, what_time_is_it_now()-time);
-    int nboxes = 0;
     detection *dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes);
     fprintf(stderr, "nboxes = %d\n", nboxes);
     //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
     if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
     draw_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
     
-    callback_predict_result(dets, nboxes, l.classes, im.w, im.h);
+    det_native = convert_result_to_native(dets, nboxes, thresh, l.classes, im.w, im.h);
+    *pnboxes = nboxes;
 
     free_detections(dets, nboxes);
     if(outfile){
@@ -135,6 +195,8 @@ void test_detector(network* net, char *filename, float thresh, float hier_thresh
 
     free_image(im);
     free_image(sized);
+
+    return det_native;
 
 }
 
