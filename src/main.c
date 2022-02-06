@@ -227,7 +227,7 @@ int main(int argc, char** argv) {
     char *weightfile = argv[3];
 */
 
-	ret = yolo_initialize("coco.data", "yolov3-tiny.cfg", "yolov3-tiny.weights");
+	ret = yolo_initialize("coco.data", "signate.cfg", "signate_final.weights");
     assert(ret == 0);
 
     char *fname = argv[1];
