@@ -50,6 +50,7 @@ RUN mkdir build
 
 WORKDIR /root/src/build
 RUN cmake ../opencv-3.4.3 && make -j4 && make install
+RUN echo /usr/local/lib > /etc/ld.so.conf.d/opencv.conf && ldconfig -v
 
 WORKDIR /root/src
 RUN git clone https://github.com/leggedrobotics/tensorflow-cpp
