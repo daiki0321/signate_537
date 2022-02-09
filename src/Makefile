@@ -59,7 +59,7 @@ LIBS = -L/usr/local/lib -lvmlib -lm -ldl -lpthread -lrt `pkg-config --libs openc
     -Wl,--export=__heap_base -Wl,--export=__data_end \
     -Wl,--export=tracker_new
 
-INCLUDE = -I./include -I./wamr/include -I./tracker/include -I/usr/include/eigen3 -I/usr/local/include/tensorflow
+INCLUDE = -I./include -I./wamr/include -I./tracker/include -I/usr/include/eigen3 -I/usr/local/include/tensorflow -I/root/src/build/include -I/root/src/build/include/tensorflow
 
 EXEC=$(NAME)
 

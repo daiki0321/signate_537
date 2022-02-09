@@ -2,7 +2,7 @@
 
 set -e
 
-export LD_LIBRARY_PATH=/usr/local/lib
+export LD_LIBRARY_PATH=./output/$1/lib
 
 cd ./output/$1 && ./yolo_main ./image_list_test.txt > log.txt
 

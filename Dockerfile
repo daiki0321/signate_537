@@ -49,8 +49,7 @@ RUN unzip opencv.zip
 RUN mkdir build
 
 WORKDIR /root/src/build
-RUN cmake ../opencv-3.4.3 && make -j4 && make install
-RUN echo /usr/local/lib > /etc/ld.so.conf.d/opencv.conf && ldconfig -v
+RUN cmake ../opencv-3.4.3 -DCMAKE_INSTALL_PREFIX=/root/src/build && make -j4 && make install
 
 WORKDIR /root/src
 RUN git clone https://github.com/leggedrobotics/tensorflow-cpp
@@ -62,10 +61,10 @@ WORKDIR /root/src/tensorflow-cpp/tensorflow
 RUN mkdir build
 
 WORKDIR /root/src/tensorflow-cpp/tensorflow/build
-RUN cmake -DCMAKE_INSTALL_PREFIX=~/.local -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
+RUN cmake -DCMAKE_INSTALL_PREFIX=/root/src/build -DCMAKE_BUILD_TYPE=Release ..
 RUN make install -j
 
-RUN cp /usr/local/lib/libtensorflow_framework.so.1 /usr/local/lib/libtensorflow_framework.so
+RUN cp /root/src/build/lib/libtensorflow_framework.so.1 /root/src/build/lib/libtensorflow_framework.so
 
 WORKDIR /root/src
 COPY ./src /root/src/main
