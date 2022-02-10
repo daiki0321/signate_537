@@ -139,7 +139,7 @@ linear_assignment::min_cost_matching(tracker *distance_metric,
 
 DYNAMICM
 linear_assignment::gate_cost_matrix(
-        std::shared_ptr<KalmanFilter> &kf,
+        KalmanFilter *kf,
         DYNAMICM &cost_matrix,
         std::vector<Track> &tracks,
         const DETECTIONS &detections,

@@ -22,7 +22,7 @@ endif
 CSRCS = $(addprefix $(SRCDIR), $(CSRC))
 
 CPPSRC = tracker/src/track.cpp tracker/src/tracker.cpp tracker/src/kalmanfilter.cpp 
-CPPSRC += tracker/src/nn_matching.cpp tracker/src/linear_assignment.cpp tracker/src/hungarianoper.cpp tracker/src/FeatureTensor.cpp
+CPPSRC += tracker/src/nn_matching.cpp tracker/src/linear_assignment.cpp tracker/src/hungarianoper.cpp tracker/src/model.cpp tracker/src/deepsort.cpp
 CPPSRC += tracker/src/tracker_if.cpp
 CPPSRCS = $(addprefix $(SRCDIR), $(CPPSRC))
 
@@ -47,7 +47,7 @@ CFLAGS += -DWASI_GEMM_RISC_V
 endif
 
 LD_FLAGS = 
-LIBS = -L/usr/local/lib -lvmlib -lm -ldl -lpthread -lrt `pkg-config --libs opencv` -ltensorflow_cc -ltensorflow_framework
+LIBS = -L/usr/local/lib -lvmlib -lm -ldl -lpthread -lrt `pkg-config --libs opencv`
 
 #CFLAGS = -O3                 \
     -fno-exceptions            \
@@ -59,7 +59,7 @@ LIBS = -L/usr/local/lib -lvmlib -lm -ldl -lpthread -lrt `pkg-config --libs openc
     -Wl,--export=__heap_base -Wl,--export=__data_end \
     -Wl,--export=tracker_new
 
-INCLUDE = -I./include -I./wamr/include -I./tracker/include -I/usr/include/eigen3 -I/usr/local/include/tensorflow -I/root/src/build/include -I/root/src/build/include/tensorflow
+INCLUDE = -I./include -I./wamr/include -I./tracker/include -I/usr/include/eigen3 -I/root/src/build/include 
 
 EXEC=$(NAME)
 

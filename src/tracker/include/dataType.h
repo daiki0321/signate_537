@@ -1,15 +1,23 @@
-#ifndef _DATATYPE_H_
-#define _DATATYPE_H_
+#pragma once
+#ifndef DATATYPE_H
+#define DATATYPEH
 
 #include <cstddef>
 #include <vector>
+//#include <Eigen>
 #include <Eigen/Core>
+#include "sort_debug.h"
 #include <opencv2/opencv.hpp>
+
+//#define FEATURE_MATCH_EN
 
 typedef Eigen::Matrix<float, 1, 4, Eigen::RowMajor> DETECTBOX;
 typedef Eigen::Matrix<float, -1, 4, Eigen::RowMajor> DETECTBOXSS;
 typedef Eigen::Matrix<float, 1, 128, Eigen::RowMajor> FEATURE;
 typedef Eigen::Matrix<float, Eigen::Dynamic, 128, Eigen::RowMajor> FEATURESS;
+// typedef Eigen::Matrix<float, 1, 324, Eigen::RowMajor> FEATURE;
+// typedef Eigen::Matrix<float, Eigen::Dynamic, 324, Eigen::RowMajor> FEATURESS;
+//typedef std::vector<FEATURE> FEATURESS;
 
 //Kalmanfilter
 //typedef Eigen::Matrix<float, 8, 8, Eigen::RowMajor> KAL_FILTER;
@@ -34,6 +42,11 @@ typedef struct t{
 
 //linear_assignment:
 typedef Eigen::Matrix<float, -1, -1, Eigen::RowMajor> DYNAMICM;
+
+typedef struct Point{
+    int x;
+    int y;
+}Point;
 
 
 #endif // DATATYPE_H

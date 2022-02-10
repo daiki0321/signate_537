@@ -1,6 +1,6 @@
 #include "track.h"
 
-Track::Track(KAL_MEAN& mean, KAL_COVA& covariance, int track_id, int n_init, int max_age, const FEATURE& feature, const std::string& det_class, const cv::Scalar& col)
+Track::Track(KAL_MEAN& mean, KAL_COVA& covariance, int track_id, int n_init, int max_age, int class_id, const FEATURE& feature)
 {
     this->mean = mean;
     this->covariance = covariance;
@@ -10,14 +10,16 @@ Track::Track(KAL_MEAN& mean, KAL_COVA& covariance, int track_id, int n_init, int
     this->time_since_update = 0;
     this->state = TrackState::Tentative;
     features = FEATURESS(1, 128);
+    // features = FEATURESS(1, 324);
     features.row(0) = feature;//features.rows() must = 0;
-    this->detection_class = det_class;
+    this->class_id = class_id;
     this->_n_init = n_init;
     this->_max_age = max_age;
-    this->color = col;
+    this->outside=true;
+    this->counted=false;
 }
 
-void Track::predit(std::shared_ptr<KalmanFilter> &kf)
+void Track::predit(KalmanFilter *kf)
 {
     /*Propagate the state distribution to the current time step using a
         Kalman filter prediction step.
@@ -33,7 +35,48 @@ void Track::predit(std::shared_ptr<KalmanFilter> &kf)
     this->time_since_update += 1;
 }
 
-void Track::update(std::shared_ptr<KalmanFilter> &kf, const DETECTION_ROW& detection)
+int Track::get_cross(cv::Point p1,cv::Point p2, cv::Point p){
+    return ((p1.x-p.x)*(p2.y-p.y)-(p2.x-p.x)*(p1.y-p.y))/100;
+}
+
+void Track::judge_in(cv::Point now_loc,std::deque<cv::Point> area){
+    cv::Point pointA = area[0];
+    cv::Point pointB = area[1];
+    cv::Point pointC = area[2];
+    cv::Point pointD = area[3];
+    if ((get_cross(pointA, pointB, now_loc)*get_cross(pointC, pointD, now_loc)) < 0
+        && (get_cross(pointA, pointC, now_loc)*get_cross(pointB, pointD, now_loc)) < 0){
+        this->outside = false;
+        this->place_status.push_back(1);
+        }
+    else if ((get_cross(pointA, pointB, now_loc)) > 0){
+        this->outside = true;
+        this->place_status.push_back(0);
+    }
+    else{
+        this->outside = true;
+        this->place_status.push_back(2);
+    }
+    if(this->place_status.size()>this->_max_age){
+        this->place_status.pop_front();
+    }
+}
+
+void Track::update_status(std::deque<cv::Point> area){
+    cv::Point loc = cv::Point(int(this->mean.data()[0]),int(this->mean.data()[1]));
+    judge_in(loc,area);
+}
+
+bool Track::get_counted()
+{
+    return this->counted;
+}
+void Track::change_counted(bool status)
+{   
+    this->counted = status;
+}
+
+void Track::update(KalmanFilter * const kf, const DETECTION_ROW& detection)
 {
     KAL_DATA pa = kf->update(this->mean, this->covariance, detection.to_xyah());
     this->mean = pa.first;
@@ -43,10 +86,13 @@ void Track::update(std::shared_ptr<KalmanFilter> &kf, const DETECTION_ROW& detec
     //    this->features.row(features.rows()) = detection.feature;
     this->hits += 1;
     this->time_since_update = 0;
-    printf("this->state  = %d this->hits = %d this->_n_init = %d \n",
-    this->state, this->hits, this->_n_init);
     if(this->state == TrackState::Tentative && this->hits >= this->_n_init) {
         this->state = TrackState::Confirmed;
+    }
+    cv::Point loc = cv::Point(int(this->mean.data()[0]),int(this->mean.data()[1]));
+    this->track_let.push_back(loc);
+    if(this->track_let.size()>this->_max_age){
+        this->track_let.pop_front();
     }
 }
 
@@ -87,6 +133,8 @@ void Track::featuresAppendOne(const FEATURE &f)
     int size = this->features.rows();
     FEATURESS newfeatures = FEATURESS(size+1, 128);
     newfeatures.block(0, 0, size, 128) = this->features;
+    // FEATURESS newfeatures = FEATURESS(size+1, 324);
+    // newfeatures.block(0, 0, size, 324) = this->features;
     newfeatures.row(size) = f;
     features = newfeatures;
 }

@@ -1,5 +1,4 @@
 #include "nn_matching.h"
-#include "errmsg.h"
 
 using namespace Eigen;
 
@@ -12,10 +11,6 @@ NearNeighborDisMetric::NearNeighborDisMetric(
     } else if (metric == cosine) {
         _metric = &NearNeighborDisMetric::_nncosine_distance;
     } else {
-        /*errMsg::getInstance()->out(
-                    "nn_matching.cpp",
-                    "NearestNeighborDistanceMetric::NearestNeighborDistanceMetric",
-                    "Invalid metric; must be either 'euclidean' or 'cosine'", true);*/
     }
     this->mating_threshold = matching_threshold;
     this->budget = budget;

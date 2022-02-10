@@ -13,13 +13,13 @@ const double KalmanFilter::chi2inv95[10] = {
     15.507,
     16.919
 };
-KalmanFilter::KalmanFilter(const double& dt)
+KalmanFilter::KalmanFilter()
 {
     int ndim = 4;
+    double dt = 1.;
 
     _motion_mat = Eigen::MatrixXf::Identity(8, 8);
-    for(int i = 0; i < ndim; i++) 
-    {
+    for(int i = 0; i < ndim; i++) {
         _motion_mat(i, ndim+i) = dt;
     }
     _update_mat = Eigen::MatrixXf::Identity(4, 8);

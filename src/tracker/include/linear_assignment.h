@@ -1,10 +1,7 @@
-#ifndef _LINEAR_ASSIGNMENT_H_
-#define _LINEAR_ASSIGNMENT_H_
+#ifndef LINEAR_ASSIGNMENT_H
+#define LINEAR_ASSIGNMENT_H
 #include "dataType.h"
 #include "tracker.h"
-#include <opencv2/core/eigen.hpp>
-#include <map>
-#include <future>
 
 #define INFTY_COST 1e5
 class tracker;
@@ -35,7 +32,7 @@ public:
             std::vector<int>& track_indices,
             std::vector<int>& detection_indices);
     DYNAMICM gate_cost_matrix(
-            std::shared_ptr<KalmanFilter> & kf,
+            KalmanFilter* kf,
             DYNAMICM& cost_matrix,
             std::vector<Track>& tracks,
             const DETECTIONS& detections,

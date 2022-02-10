@@ -43,6 +43,7 @@ x_gemm(wasm_exec_env_t exec_env, int TA, int TB, int M, int N, int K, float ALPH
 int yolo_initialize(char *datacfg, char *cfgfile, char *weightfile);
 int test_detector(char *filename, char *outfile);
 void callback_predict_result(wasm_exec_env_t exec_env, void* dets, int total, int classes, int w, int h);
+void print_save_json_result(char* filename);
 
 static wasm_function_inst_t get_function(wasm_module_inst_t module_inst, char* func_name) {
 
@@ -262,6 +263,8 @@ int main(int argc, char** argv) {
     wasm_runtime_deinstantiate(module_inst);
 
     wasm_runtime_unload(module);
+
+    print_save_json_result("test_00.mp4");
 
 	return 0;
 }

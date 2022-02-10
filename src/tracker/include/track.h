@@ -1,12 +1,10 @@
 #ifndef TRACK_H
 #define TRACK_H
 
-#include <future>
-
 #include "dataType.h"
-#include "utility.h"
 
 #include "kalmanfilter.h"
+#include "model.h"
 
 class Track
 {
@@ -59,21 +57,23 @@ class Track
 
 public:
     Track(KAL_MEAN& mean, KAL_COVA& covariance, int track_id,
-          int n_init, int max_age, const FEATURE& feature, 
-          const std::string& det_class = "", const cv::Scalar& col = cv::Scalar());
-    void predit(std::shared_ptr<KalmanFilter> &kf);
-    void update(std::shared_ptr<KalmanFilter> & kf, const DETECTION_ROW &detection);
-    void set_dt(std::shared_ptr<KalmanFilter> &kf, const float& dt);
+          int n_init, int max_age, int class_id, const FEATURE& feature);
+    void predit(KalmanFilter *kf);
+    void update(KalmanFilter * const kf, const DETECTION_ROW &detection);
+    void judge_in(cv::Point now_loc,std::deque<cv::Point> area);
+    void update_status(std::deque<cv::Point> area);
+    int get_cross(cv::Point p1,cv::Point p2, cv::Point p);
     void mark_missed();
     bool is_confirmed();
     bool is_deleted();
     bool is_tentative();
+    bool get_counted();
+    void change_counted(bool status);
     DETECTBOX to_tlwh();
-    DETECTBOX to_xyah();
     int time_since_update;
     int track_id;
-    std::string detection_class;
-    cv::Scalar color;
+    int class_id;
+    float confidence;
     FEATURESS features;
     KAL_MEAN mean;
     KAL_COVA covariance;
@@ -83,6 +83,10 @@ public:
     int _n_init;
     int _max_age;
     TrackState state;
+    std::deque<int> place_status;
+    std::deque<cv::Point> track_let;
+    bool outside;
+    bool counted;
 private:
     void featuresAppendOne(const FEATURE& f);
 };
