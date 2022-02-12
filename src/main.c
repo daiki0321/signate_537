@@ -1,11 +1,16 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
 
 #include "wasm_export.h"
 #include "utils.h"
 
 #include "darknet.h"
+
 
 #define STACK_SIZE 8 * 1024
 #define HEAP_SIZE 1024 * 1024 * 1024
@@ -126,6 +131,77 @@ static wasm_module_t load_module(char* wasm_path){
 
 }
 
+static int start_riscv(char* riscv_image_path) {
+
+#define REG(address) *(volatile unsigned int*)(address)
+
+   //DMEM
+    int uio0_fd = open("/dev/uio0", O_RDWR | O_SYNC);
+    unsigned char* UDMEM_BASE = (unsigned char*) mmap(NULL, 0x20000, PROT_READ|PROT_WRITE, MAP_SHARED, uio0_fd, 0);
+
+    //IMEM
+    int uio2_fd = open("/dev/uio2", O_RDWR | O_SYNC);
+    unsigned int* IMEM_BASE = (unsigned int*) mmap(NULL, 0x40000, PROT_READ|PROT_WRITE, MAP_SHARED, uio2_fd, 0);
+
+    //IMEM1
+    int uio3_fd = open("/dev/uio3", O_RDWR | O_SYNC);
+    unsigned int* IMEM1_BASE = (unsigned int*) mmap(NULL, 0x40000, PROT_READ|PROT_WRITE, MAP_SHARED, uio3_fd, 0);
+
+    //GPIO
+    int uio4_fd = open("/dev/uio4", O_RDWR | O_SYNC);
+    unsigned int* GPIO_DATA = (unsigned int*) mmap(NULL, 0x4000, PROT_READ|PROT_WRITE, MAP_SHARED, uio4_fd, 0);
+    unsigned int* GPIO_TRI = GPIO_DATA + 1;
+
+    FILE* fd = fopen("main", "rb");
+    if(fd == NULL) {
+            printf("main file not opened\n");
+            return NULL;
+    }
+    if (fseek(fd, 0x1000, SEEK_END) != 0) {
+        return NULL;
+    }
+    int file_size = ftell(fd);
+    if (file_size == -1) {
+        return NULL;
+    }
+
+    FILE* fd1 = fopen("main_b", "rb");
+    if(fd1 == NULL) {
+            printf("main file not opened\n");
+            return NULL;
+    }
+    if (fseek(fd1, 0x1000, SEEK_END) != 0) {
+        return NULL;
+    }
+    int file_size1 = ftell(fd1);
+    if (file_size1 == -1) {
+        return NULL;
+    }
+
+    printf("RiscV program file size is %d\n", file_size);
+    fseek(fd, 0x1000, SEEK_SET);
+    fseek(fd1, 0x1000, SEEK_SET);
+
+    int rc = fread(IMEM_BASE, sizeof(unsigned int), 0x40000 / sizeof(unsigned int), fd);
+    if (rc < 0) {
+            printf("Main File Read IMEM error\n");
+            return NULL;
+    }
+    int rc = fread(IMEM1_BASE, sizeof(unsigned int), 0x40000 / sizeof(unsigned int), fd1);
+    if (rc < 0) {
+            printf("Main File Read IMEM error\n");
+            return NULL;
+    }
+    sleep(1);
+      REG(GPIO_DATA) = 0x04; // LED1
+    sleep(1);
+      REG(GPIO_DATA) = 0x01; // Reset off
+
+    fclose(fd);
+    fclose(fd1);
+    return 0;
+}
+
 static int start_runtime(void) {
 
 	static char global_heap_buf[1024 * 1024 * 1024];
@@ -206,7 +282,9 @@ int main(int argc, char** argv) {
 
     ret = start_runtime();
     assert(ret == 0);
-
+#if WASI_GEMM_RISC_V
+    ret = start_riscv(".");
+#endif
     //wasm_module_t module = load_module("test.wasm");
     wasm_module_t module = load_module("tracking.wasm");
     assert(module);

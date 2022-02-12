@@ -45,5 +45,5 @@ WORKDIR /root/src
 COPY ./src /root/src/main
 
 WORKDIR /root/src/main
-RUN make clean && make
+RUN make clean && make WASI_GEMM_RISC_V=1
 
