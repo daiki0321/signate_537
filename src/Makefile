@@ -1,8 +1,6 @@
 NAME=yolo_main
 
-#CC = wasicc
 CC = clang
-#CXX = wasic++
 CXX = clang++
 
 SRCDIR=./

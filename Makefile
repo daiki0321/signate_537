@@ -1,9 +1,13 @@
 TARGET ?= amd64
 
-ifeq ("$(TARGET"),"arm64")
+ifeq ("$(TARGET)","arm64")
     WAMR_ARCH = AARCH64
 else
     WAMR_ARCH = X86_64
+endif
+
+ifeq ("$(WASI)","risc-v")
+    RISC_V_ACCELERATOR = "WASI_GEMM_RISC_V=1"
 endif
 
 EXTRA_CFLAGS =
@@ -14,7 +18,7 @@ all: wasm_module wamr_main copy_build
 
 .PHONY: wamr_main
 wamr_main:
-	docker buildx build --load --platform linux/$(TARGET) --build-arg ARCH=$(WAMR_ARCH) -t wamr_$(TARGET):latest .
+	docker buildx build --load --platform linux/$(TARGET) --build-arg ARCH=$(WAMR_ARCH) --build-arg AI_ACCELERATOR=$(RISC_V_ACCELERATOR) -t wamr_$(TARGET):latest .
 
 .PHONY: wasm_module
 wasm_module:
@@ -45,7 +49,5 @@ copy_build:
 	$(call copy_out_from_docker, wamr_$(TARGET):latest,/root/src/main/test_00/img003.jpg, ./output/$(TARGET)/test_00)
 	$(call copy_out_from_docker, wamr_$(TARGET):latest,/root/src/main/test_00/img004.jpg, ./output/$(TARGET)/test_00)
 	$(call copy_out_from_docker, wamr_$(TARGET):latest,/root/src/main/data, ./output/$(TARGET))
-	$(call copy_out_from_docker, wamr_$(TARGET):latest,/root/src/build/lib, ./output/$(TARGET)/lib)
 	$(call copy_out_from_docker, wamr_$(TARGET):latest,/root/src/main/image_list_test.txt, ./output/$(TARGET))
-	$(call copy_out_from_docker, wamr_$(TARGET):latest,/root/src/main/tracker/RUNNINGDATA/tensor_networks/111.meta, ./output/$(TARGET)/tracker/RUNNINGDATA/tensor_networks)
-	$(call copy_out_from_docker, wamr_$(TARGET):latest,/root/src/main/tracker/RUNNINGDATA/tensor_networks/mars-small128.ckpt-68577, ./output/$(TARGET)/tracker/RUNNINGDATA/tensor_networks)
+	$(call copy_out_from_docker, wamr_$(TARGET):latest,/usr/local/lib, ./output/$(TARGET))

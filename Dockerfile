@@ -15,6 +15,7 @@ RUN git clone --depth=1 https://github.com/bytecodealliance/wasm-micro-runtime
 
 ARG CC
 ARG ARCH=AARCH64
+ARG AI_ACCELERATOR
 WORKDIR /root/src/wasm-micro-runtime/product-mini/platforms/linux/build
 RUN cmake \
     -DCMAKE_CXX_COMPILER=clang++ \
@@ -49,28 +50,13 @@ RUN unzip opencv.zip
 RUN mkdir build
 
 WORKDIR /root/src/build
-RUN cmake ../opencv-3.4.3 -DCMAKE_INSTALL_PREFIX=/root/src/build && make -j4 && make install
-
-WORKDIR /root/src
-RUN git clone https://github.com/leggedrobotics/tensorflow-cpp
-
-WORKDIR /root/src/tensorflow-cpp/eigen
-RUN ./install.sh
-
-WORKDIR /root/src/tensorflow-cpp/tensorflow
-RUN mkdir build
-
-WORKDIR /root/src/tensorflow-cpp/tensorflow/build
-RUN cmake -DCMAKE_INSTALL_PREFIX=/root/src/build -DCMAKE_BUILD_TYPE=Release ..
-RUN make install -j
-
-RUN cp /root/src/build/lib/libtensorflow_framework.so.1 /root/src/build/lib/libtensorflow_framework.so
+RUN cmake ../opencv-3.4.3 -DCMAKE_INSTALL_PREFIX=/usr/local && make -j4 && make install
 
 WORKDIR /root/src
 COPY ./src /root/src/main
 
 WORKDIR /root/src/main
-RUN make clean && make WASI_GEMM_RISC_V=1
+RUN make clean && make ${AI_ACCELERATOR}
 
 
 
