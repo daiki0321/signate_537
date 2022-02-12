@@ -1,7 +1,7 @@
 FROM ubuntu:20.04 as tools
 ENV DEBIAN_FRONTEND="noninteractive"
 
-RUN apt-get update && apt-get install -y make git cmake wget \
+RUN apt-get update && apt-get install -y make git cmake wget libeigen3-dev unzip libboost-all-dev \
 	clang-11 clang-tools-11 \
 	clang++-11
 
@@ -41,9 +41,36 @@ RUN install -m 755 /root/src/wasm-micro-runtime/product-mini/platforms/linux/bui
 RUN install -m 644 /root/src/wasm-micro-runtime/core/iwasm/include/lib_export.h /usr/local/include
 RUN install -m 644 /root/src/wasm-micro-runtime/core/iwasm/include/wasm_export.h /usr/local/include
 
+WORKDIR /root/src/
+# install opencv
+RUN wget -O opencv.zip https://github.com/opencv/opencv/archive/3.4.3.zip
+RUN unzip opencv.zip
+
+RUN mkdir build
+
+WORKDIR /root/src/build
+RUN cmake ../opencv-3.4.3 -DCMAKE_INSTALL_PREFIX=/root/src/build && make -j4 && make install
+
+WORKDIR /root/src
+RUN git clone https://github.com/leggedrobotics/tensorflow-cpp
+
+WORKDIR /root/src/tensorflow-cpp/eigen
+RUN ./install.sh
+
+WORKDIR /root/src/tensorflow-cpp/tensorflow
+RUN mkdir build
+
+WORKDIR /root/src/tensorflow-cpp/tensorflow/build
+RUN cmake -DCMAKE_INSTALL_PREFIX=/root/src/build -DCMAKE_BUILD_TYPE=Release ..
+RUN make install -j
+
+RUN cp /root/src/build/lib/libtensorflow_framework.so.1 /root/src/build/lib/libtensorflow_framework.so
+
 WORKDIR /root/src
 COPY ./src /root/src/main
 
 WORKDIR /root/src/main
 RUN make clean && make WASI_GEMM_RISC_V=1
+
+
 

@@ -19,6 +19,8 @@ typedef struct detection_orig {
     float score;
 }detection_orig;
 
+void tracker_update(int nboxes, detection_orig* detection);
+
 void callback_predict_result(wasm_exec_env_t exec_env, void* result, int total, int classes, int w, int h)
 {
     int i, j;
@@ -100,22 +102,29 @@ int test_detector(char *filename, char *outfile)
 
     printf("[native] nboxes = %d \n", *nboxes);
 
-    bool ok = wasm_runtime_validate_app_addr(module_inst, argv[0], sizeof(detection_orig)*(*nboxes));
-    assert(ok);
-
     if (*nboxes > 0) {
+
+        bool ok = wasm_runtime_validate_app_addr(module_inst, argv[0], sizeof(detection_orig)*(*nboxes));
+        assert(ok);
+
         buf = malloc(sizeof(detection_orig)*(*nboxes));
         memcpy(buf, wasm_runtime_addr_app_to_native(module_inst, argv[0]), sizeof(detection_orig)*(*nboxes));
         for(int i = 0; i < *nboxes; i++) {
-            printf("class = %d left = %d top = %d right = %d bottom = %d score =%f\n",
+            printf("class = %d left = %d top = %d right = %d bottom = %d score = %f\n",
         buf[i].class, buf[i].left, buf[i].top, buf[i].right, buf[i].bottom, buf[i].score);
         }
         wasm_runtime_module_free(module_inst, argv[0]);
+
+        tracker_update_with_filename(filename, *nboxes, buf);
+
+        free(buf);
     }
 
     wasm_runtime_module_free(module_inst, wasm_buffer_1);
     wasm_runtime_module_free(module_inst, wasm_buffer_2);
     wasm_runtime_module_free(module_inst, wasm_buffer_3);
+
+    //tracker_update(*nboxes, buf);
 
     return 0;
 
