@@ -184,12 +184,12 @@ static int start_riscv(char* riscv_image_path) {
 
     int rc = fread(IMEM_BASE, sizeof(unsigned int), 0x40000 / sizeof(unsigned int), fd);
     if (rc < 0) {
-            printf("Main File Read IMEM error\n");
+            printf("Main File Read error\n");
             return NULL;
     }
     rc = fread(IMEM1_BASE, sizeof(unsigned int), 0x40000 / sizeof(unsigned int), fd1);
     if (rc < 0) {
-            printf("Main File Read IMEM error\n");
+            printf("Main File Read error\n");
             return NULL;
     }
     sleep(1);
