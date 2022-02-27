@@ -39,7 +39,6 @@ static void gemm_nn(int M, int N, int K, float ALPHA,
     uio4_fd = open("/dev/uio4", O_RDWR | O_SYNC);
     GPIO_BASE = (unsigned int*) mmap(NULL, 0x2000, PROT_READ|PROT_WRITE, MAP_SHARED, uio4_fd, 0);
     }
-    printf("Start\n");
 
     i= 0;
     for (int ii = 0; ii < M; ii+= DIM) {
