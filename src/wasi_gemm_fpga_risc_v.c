@@ -40,18 +40,8 @@ static void gemm_nn(int M, int N, int K, float ALPHA,
     GPIO_BASE = (unsigned int*) mmap(NULL, 0x2000, PROT_READ|PROT_WRITE, MAP_SHARED, uio4_fd, 0);
     }
     printf("Start\n");
-    /*
-    for (int ii = 0; ii < M; ii+= DIM) {
-        for (int tt = 0; tt < K; tt+= DIM) {
-            for (int jj = 0; jj < N; jj += DIM2) {
-                i++;
-            }
-        }
-    }
-    calctime = i; */
+
     i= 0;
-    printf("test aa = %x bb = %x size = %x expected size = %x new aa=%x\n", aa, bb, bb -aa, DIM*DIM*4 ,a);
-    //printf("Expected calc time %d", calctime);
     for (int ii = 0; ii < M; ii+= DIM) {
         mm = ((ii + DIM) > M ? (M - ii): DIM);
         for (int tt = 0; tt < K; tt+= DIM) {
@@ -75,9 +65,7 @@ static void gemm_nn(int M, int N, int K, float ALPHA,
                         bb[i_ * DIM + j_] = B[(tt + i_) * N + (jj + j_)];
                     }
                 }
-                i++;
-               
-		//printf("Run gemm_nn ii-%d, tt-%d, jj-%d ,%d, %d \n", ii, tt, jj, i, i * 100 /calctime);
+                i++;              
                 DMEM_BASE[1] = DIM; //mm;
                 DMEM_BASE[2] = DIM; //nn;
                 DMEM_BASE[3] = DIM; //kk;
@@ -85,18 +73,17 @@ static void gemm_nn(int M, int N, int K, float ALPHA,
                 DMEM_BASE[0] = 1; // start flag
                 REG(GPIO_BASE) = 0x03;
                 volatile int count = 0;
-                //while ((REG(GPIO_BASE) & 0x02) == 0x02) {
                 while (DMEM_BASE[0]) {
-                    //printf("%d\r", count);
                     usleep(1000);
                     count++;
                 }
+#ifdef DEBUG_CALC
                 printf("%dms (%d/%d)\r", count, i, M * N * K/(DIM * DIM * DIM));
+#endif                
                 for (int i_ = 0; i_ < mm; i_ ++) {
                     for (int j_ = 0; j_ < nn; j_ ++) {
                         C[(ii + i_) * N + (jj +j_)] += cc [i_ * DIM + j_];
                     }
-                    //printf("\r cc[%d] = %f, C[%d] = %f\n", i_ * DIM2 + nn, cc[i_ * DIM + nn], (ii + i_) * N + (jj + nn), C[(ii + i_) * N + (jj + nn)]);
                 }
             }
         }
@@ -152,25 +139,9 @@ x_gemm_fpga_risc_v(int TA, int TB, int M, int N, int K, float ALPHA,
 
 
     if(!TA && !TB) {
+#ifdef DEBUG_CALC        
         float * testC;
-        //M = (M > 32) ? 32 : M;
-        //N = (N > 2048) ? 2048 : N;
-        //K = (K > 16) ? 16 : K;
-        lda = K;
-        ldb = N;
-        ldc = N;
-        //printf("riscv: %d %d %d %d %d %f %d %d %f %d\n",TA, TB, M, N, K, ALPHA, lda, ldb, BETA, ldc);
-        /*
-        for(int i = 0; i < K; ++i){
-            for(int j = 0; j < N; ++j){
-                if ( i == j) { B[i * ldb + j] = 1; } else B[i * ldb + j] = 1;
-            }
-        } 
-        for(int i = 0; i < M; ++i){
-            for(int j = 0; j < K; ++j){
-                if ( i == j) { A[i * lda + j] = 1; } else A[i * lda + j] = 0;
-            }
-        }*/
+
         testC = (float*) malloc( M * N * 4);
         if(testC == NULL) {
             printf("malloc failed\n");
@@ -179,8 +150,10 @@ x_gemm_fpga_risc_v(int TA, int TB, int M, int N, int K, float ALPHA,
             for(int j = 0; j < N; ++j){
                 testC[i*ldc + j] = C[i*ldc + j];
             }
-        }        
+        }  
+#endif              
         gemm_nn(M, N, K, ALPHA, A ,lda, B, ldb, C, ldc, DMEM_BASE);
+#ifdef DEBUG_CALC        
         printf ("riscv finished\n");
         
         gemm_nn_cpu(M, N, K, ALPHA, A ,lda, B, ldb, testC, ldc);
@@ -194,6 +167,7 @@ x_gemm_fpga_risc_v(int TA, int TB, int M, int N, int K, float ALPHA,
         }
         free (testC);
         printf ("Comparison Finished\n"); 
+#endif        
     }
     else if(TA && !TB)
         gemm_nn(M, N, K, ALPHA,A,lda, B, ldb,C,ldc, DMEM_BASE);
