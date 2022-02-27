@@ -8,8 +8,10 @@
 //
 //
 #define DIM 16
-unsigned char* LOG_BASE = (unsigned char*) DMEM_LOG_BASE;
-unsigned int* DMEM_BASE = (unsigned int*) DMEM_BASE_ADDR;
+
+volatile unsigned char* LOG_BASE = (volatile unsigned char*) DMEM_LOG_BASE;
+volatile unsigned int* DMEM_BASE = (volatile unsigned int*) DMEM_BASE_ADDR;
+
 unsigned long g_log_writepoint = 0;
 
 void riscv_putc( char c) {
@@ -32,15 +34,18 @@ int main()
 {
     int ia, ib, id = 0;
 
-    unsigned int* DMEM_BASE = (unsigned int*) DMEM_BASE_ADDR;
-    float (*array_A);
-    float (*array_B);
-    float (*array_C);
+
+    volatile unsigned int* DMEM_BASE = (volatile unsigned int*) DMEM_BASE_ADDR;
+    volatile float (*array_A);
+    volatile float (*array_B);
+    volatile float (*array_C);
+
     unsigned int M;
     unsigned int N;
     unsigned int K;
     float ALPHA;
-    unsigned int flag;
+
+    volatile int flag;
     float sum;
     volatile int count = 0;
         /* Loop */
@@ -57,9 +62,10 @@ int main()
             N = DMEM_BASE[2];
             K = DMEM_BASE[3];
             ALPHA = (float) DMEM_BASE[4];
-            array_A = (float (*))(DMEM_BASE + 0x10);
-            array_B = (float (*))(DMEM_BASE + 0x10 + M * K);
-            array_C = (float (*))(DMEM_BASE + 0x10 + M * K + N * K);
+            array_A = (volatile float (*))(DMEM_BASE + 0x10);
+            array_B = (volatile float (*))(DMEM_BASE + 0x10 + M * K);
+            array_C = (volatile float (*))(DMEM_BASE + 0x10 + M * K + N * K);
+
             for (ia = 0; ia < M; ia++) {
                for (ib = 0; ib < N; ib++) {
                   sum = 0;

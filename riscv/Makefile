@@ -1,10 +1,11 @@
 
-CFLAGS := -Os -Wno-implicit
+CFLAGS := -O3 -Wno-implicit
 CFLAGS += -fno-builtin-printf -fno-common
 
 SRC = gemm_nn.c start.s
 HDR = 
-LDFLAGS := -std=gnu99 -static -lgcc -lc -Tlinker.ld -march=rv32im -mabi=ilp32 -Wa,-march=rv32im -nostartfiles
+
+LDFLAGS := -std=gnu99 -static -lgcc -lc -Tlinker.ld -march=rv32imf -mabi=ilp32f -Wa,-march=rv32imf -nostartfiles
 
 main: $(SRC) $(HDR)
 	riscv64-unknown-elf-gcc $(CFLAGS) $(SRC) $(LDFLAGS) -o main
