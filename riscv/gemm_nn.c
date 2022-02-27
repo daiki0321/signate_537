@@ -8,8 +8,10 @@
 //
 //
 #define DIM 16
+
 volatile unsigned char* LOG_BASE = (volatile unsigned char*) DMEM_LOG_BASE;
 volatile unsigned int* DMEM_BASE = (volatile unsigned int*) DMEM_BASE_ADDR;
+
 unsigned long g_log_writepoint = 0;
 
 void riscv_putc( char c) {
@@ -32,14 +34,17 @@ int main()
 {
     int ia, ib, id = 0;
 
+
     volatile unsigned int* DMEM_BASE = (volatile unsigned int*) DMEM_BASE_ADDR;
     volatile float (*array_A);
     volatile float (*array_B);
     volatile float (*array_C);
+
     unsigned int M;
     unsigned int N;
     unsigned int K;
     float ALPHA;
+
     volatile int flag;
     float sum;
     volatile int count = 0;
@@ -60,6 +65,7 @@ int main()
             array_A = (volatile float (*))(DMEM_BASE + 0x10);
             array_B = (volatile float (*))(DMEM_BASE + 0x10 + M * K);
             array_C = (volatile float (*))(DMEM_BASE + 0x10 + M * K + N * K);
+
             for (ia = 0; ia < M; ia++) {
                for (ib = 0; ib < N; ib++) {
                   sum = 0;
@@ -71,7 +77,6 @@ int main()
             }
             riscv_puts("Calc End\n");
             DMEM_BASE[0] = 0;
-            
             REG(GPIO_BASE) = 0x01;
             //DMEM_BASE =  array_C + number * number;
          }

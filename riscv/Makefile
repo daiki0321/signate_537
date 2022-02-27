@@ -4,6 +4,7 @@ CFLAGS += -fno-builtin-printf -fno-common
 
 SRC = gemm_nn.c start.s
 HDR = 
+
 LDFLAGS := -std=gnu99 -static -lgcc -lc -Tlinker.ld -march=rv32imf -mabi=ilp32f -Wa,-march=rv32imf -nostartfiles
 
 main: $(SRC) $(HDR)

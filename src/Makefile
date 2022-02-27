@@ -1,8 +1,6 @@
 NAME=yolo_main
 
-#CC = wasicc
 CC = clang
-#CXX = wasic++
 CXX = clang++
 
 SRCDIR=./
@@ -21,8 +19,10 @@ endif
 
 CSRCS = $(addprefix $(SRCDIR), $(CSRC))
 
-#CPPSRC = image_opencv.cpp
-#CPPSRCS = $(addprefix $(SRCDIR), $(CPPSRC))
+CPPSRC = tracker/src/track.cpp tracker/src/tracker.cpp tracker/src/kalmanfilter.cpp 
+CPPSRC += tracker/src/nn_matching.cpp tracker/src/linear_assignment.cpp tracker/src/hungarianoper.cpp tracker/src/model.cpp tracker/src/deepsort.cpp
+CPPSRC += tracker/src/tracker_if.cpp
+CPPSRCS = $(addprefix $(SRCDIR), $(CPPSRC))
 
 #$SRC = trackers/kalman.cpp
 #SRC = trackers/kcf.cpp 
@@ -45,7 +45,7 @@ CFLAGS += -DWASI_GEMM_RISC_V
 endif
 
 LD_FLAGS = 
-LIBS = -L/usr/local/lib -lvmlib -lm -ldl -lpthread -lrt
+LIBS = -L/usr/local/lib -lvmlib -lm -ldl -lpthread -lrt `pkg-config --libs opencv`
 
 #CFLAGS = -O3                 \
     -fno-exceptions            \
@@ -57,7 +57,7 @@ LIBS = -L/usr/local/lib -lvmlib -lm -ldl -lpthread -lrt
     -Wl,--export=__heap_base -Wl,--export=__data_end \
     -Wl,--export=tracker_new
 
-INCLUDE = -I./include -I./wamr/include
+INCLUDE = -I./include -I./wamr/include -I./tracker/include -I/usr/include/eigen3 -I/root/src/build/include 
 
 EXEC=$(NAME)
 
@@ -70,7 +70,7 @@ clean:
 .PHONY: all clean
 
 $(EXEC): $(COBJS)
-	$(CC) $(LD_FLAGS) $^ -o $@ $(LIBS)
+	$(CXX) $(LD_FLAGS) $^ -o $@ $(LIBS)
 
 $(OBJDIR)%.o: %.cpp $(DEPS)
 	$(CXX) $(CFLAGS) $(INCLUDE) -c $< -o $@
@@ -80,3 +80,4 @@ $(OBJDIR)%.o: %.c $(DEPS)
 
 obj:
 	mkdir -p obj/$(SRCDIR)
+	mkdir -p obj/tracker/src
